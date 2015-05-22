@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>*{font-size: 1em}</style>
+</head>
+<body>
+感应页面
+<div id="content"></div>
+
+<div id="cube">
+
+</div>
+
+<script>
+    /*取cookie*/
+    function getCookie(name){
+        var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+        if(arr=document.cookie.match(reg)){return decodeURI(arr[2])}else{return null;}
+    }
+    var ssid = getCookie('ssid');
+    var xhr = new XMLHttpRequest();
+    window.addEventListener("deviceorientation", function(e) {
+        xhr.open('GET','/sd?data=['+ parseInt(e.alpha)+','+ parseInt(e.beta)+','+ parseInt(e.gamma)+']&ssid='+ssid,true);
+        xhr.send();
+    }, true);
+
+//    window.addEventListener("click", function(e) {
+//        xhr.open('GET','/sd?data=['+ parseInt(e.clientX)+','+ parseInt(e.clientY)+']&ssid='+ssid,true);
+//        xhr.send();
+//    }, true);
+
+    xhr.onreadystatechange = function(){
+        if (xhr.readyState==4 && xhr.status==200)
+        {
+            document.getElementById('content').innerHTML = xhr.responseText;
+        }
+    };
+
+</script>
+</body>
+</html>

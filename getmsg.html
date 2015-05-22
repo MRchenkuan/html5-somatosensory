@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript" src="http://libs.useso.com/js/jquery/2.1.0/jquery.min.js"></script>
+    <script type="text/javascript" src="/qrcode.js"></script>
+    <script type="text/javascript" src="/threejs.js"></script>
+</head>
+<body style="text-align: center">
+此页面用来不断的从服务器拉取数据
+<div id="code"></div>
+<div id="content"></div>
+<div id="rotation"></div>
+<div id="canvas"></div>
+<script>
+    /*取cookie*/
+    var cube_rotation_pre = null;
+    var HOSTIP='192.168.18.205';
+    var cube_rotation = [0,0,0];
+    function getCookie(name)
+    {
+        var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+        if(arr=document.cookie.match(reg))
+            return decodeURI(arr[2]);
+        else
+            return null;
+    }
+
+    /*生成二维码*/
+    $('#code').qrcode({
+        text:"http://"+HOSTIP+":3000/pgset?ssid="+getCookie('ssid'),
+        width:200,height:200,typeNumber:-1,render:'canvas'
+    });
+
+    /*发ajax请求*/
+    var xhr = new XMLHttpRequest();
+    var ssid=getCookie('ssid') ;
+
+    xhr.open('GET','/gd',true);
+    xhr.onreadystatechange = function(){
+        if (xhr.readyState==4 && xhr.status==200)
+        {
+            document.getElementById('content').innerHTML = xhr.responseText;
+            cube_rotation = eval("("+document.getElementById('data').innerHTML+")");
+            if(!cube_rotation_pre){
+                cube_rotation_pre = cube_rotation;
+            }
+        }
+    };
+
+    setInterval(function(){
+        xhr.open('GET','/gd?ssid='+ssid,true);
+        xhr.send();
+    },100);
+
+
+
+    /*
+     * 3d 场景构建过程
+     * */
+    // 设置场景大小
+    var WIDTH = window.innerWidth,
+        HEIGHT = window.innerHeight;
+
+    // 设置镜头属性
+    var VIEW_ANGLE = 65,
+        ASPECT = WIDTH / HEIGHT,
+        NEAR = 0.1,
+        FAR = 10000;
+
+    // 获取绑定的DOM元素，假设我们使用的jQuery处理。
+    var container = document.getElementById('canvas');
+
+    // 创建WebGL渲染器，镜头以及场景
+    var renderer = new THREE.WebGLRenderer();
+    var camera = new THREE.PerspectiveCamera(VIEW_ANGLE,ASPECT,NEAR,FAR);
+    var scene = new THREE.Scene();
+
+    // 在场景中添加镜头
+    scene.add(camera);
+
+    // 镜头起始位置0，0，0，因此将镜头回拉
+    camera.position.z = 300;
+    camera.position.x = 0;
+
+    // 开始渲染
+    renderer.setSize(WIDTH, HEIGHT);
+
+    //增添渲染器提供的DOM元素
+    container.appendChild(renderer.domElement);
+
+
+    //添加材质
+    var sphereMaterial =new THREE.MeshLambertMaterial({
+        color: 0xddcfcf
+    });
+
+    //设置方块
+    var cube = new THREE.Mesh(new THREE.CubeGeometry(300, 500, 100), new THREE.MeshLambertMaterial({ color: 0xddcfcf }));
+
+    cube.position.x = 0;
+    cube.position.y = 0;
+    cube.position.z = -500;
+    cube.castShadow = cube.receiveShadow = true;
+
+    // 在场景中添加方块
+    scene.add(cube);
+
+
+    // 创建点光源
+    var pointLight =new THREE.PointLight(0xFF00dd);
+    pointLight.position.z = 600;
+
+    // 添加至场景
+    scene.add(pointLight);
+
+    /*通过鼠标移动改变光源位置*/
+    window.addEventListener('mousemove',function(e){
+        pointLight.position.x= e.x-500;
+        pointLight.position.y= -e.y+100;
+    });
+
+    setInterval(function(){
+        /*更新偏转角*/
+        cube.rotation.y=Math.PI*(cube_rotation[2])/180;
+        cube.rotation.z=Math.PI*(cube_rotation[0])/180;
+        if(Math.abs(cube_rotation[0]-cube_rotation_pre[0])>=90||Math.abs(cube_rotation[0]-cube_rotation_pre[0])<=270){
+            cube.rotation.x=Math.PI*(cube_rotation[1])/180;
+        }else{
+            console.log('yes upset');
+            cube.rotation.x=Math.PI*(-cube_rotation[1])/180;
+        }
+
+        document.getElementById('rotation').innerHTML=cube_rotation+'==='+cube_rotation_pre.toString();
+        renderer.render(scene, camera);
+
+
+    },13);
+
+
+
+</script>
+</body>
+</html>

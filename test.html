@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript" src="http://libs.useso.com/js/jquery/2.1.0/jquery.min.js"></script>
+    <script type="text/javascript" src="js/qrcode.js"></script>
+    <script type="text/javascript" src="js//threejs.js"></script>
+</head>
+<body>
+<script>    var cube_rotation = [0,20,40];</script>
+z<input type="range" onchange="cube_rotation[0]=this.value*6" min="0" max="60"><br>
+x<input type="range" onchange="cube_rotation[1]=this.value*6" min="-30" max="30"><br>
+y<input type="range" onchange="cube_rotation[2]=this.value*6" min="-30" max="30"><br>
+<span id="span"></span>
+
+<div id="canvas"></div>
+</body>
+<script>
+
+    /*
+     * 3d 场景构建过程
+     * */
+    // 设置场景大小
+    var WIDTH = 1000,
+            HEIGHT = 800;
+
+    // 设置镜头属性
+    var VIEW_ANGLE = 65,
+            ASPECT = WIDTH / HEIGHT,
+            NEAR = 0.1,
+            FAR = 10000;
+
+    // 获取绑定的DOM元素，假设我们使用的jQuery处理。
+    var container = document.getElementById('canvas');
+
+    // 创建WebGL渲染器，镜头以及场景
+    var renderer = new THREE.WebGLRenderer();
+    var camera =
+            new THREE.PerspectiveCamera(
+                    VIEW_ANGLE,
+                    ASPECT,
+                    NEAR,
+                    FAR);
+
+    var scene = new THREE.Scene();
+
+    // 在场景中添加镜头
+    scene.add(camera);
+
+    // 镜头起始位置0，0，0，因此将镜头回拉
+    camera.position.z = 300;
+    camera.position.x = 45;
+
+    // 开始渲染
+    renderer.setSize(WIDTH, HEIGHT);
+
+    //增添渲染器提供的DOM元素
+    container.appendChild(renderer.domElement);
+
+
+
+
+    var sphereMaterial =new THREE.MeshLambertMaterial({
+        color: 0xddcfcf
+    });
+
+    //设置球体变量
+    var cube = new THREE.Mesh(new THREE.CubeGeometry(300, 500, 100), new THREE.MeshLambertMaterial({ color: 0xddcfcf }));
+
+    cube.position.x = 0;
+    cube.position.y = 0;
+    cube.position.z = -500;
+    cube.castShadow = cube.receiveShadow = true;
+
+    // 在场景中添加球体。
+    scene.add(cube);
+
+
+    // 创建点光源
+    var pointLight =new THREE.PointLight(0xFF00dd);
+    //
+    //    // 设置光源位置
+    //    pointLight.position.x = 10;
+    //    pointLight.position.y = 50;
+    pointLight.position.z = 600;
+
+    // 添加至场景
+    scene.add(pointLight);
+
+    window.addEventListener('mousemove',function(e){
+        pointLight.position.x= e.x-500;
+        pointLight.position.y= -e.y+100;
+    });
+
+    setInterval(function(){
+        document.getElementById('span').innerHTML=cube_rotation.toString()
+
+/*更新位置*/
+        cube.rotation.z=Math.PI*(cube_rotation[0])/180;
+        cube.rotation.x=2*Math.PI*(cube_rotation[1])/180;
+        cube.rotation.y=Math.PI*(cube_rotation[2])/180;
+        renderer.render(scene, camera)},13);
+</script>
+</html>
